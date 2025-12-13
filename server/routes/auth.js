@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const db = require('../server').db;
+const db = require('../config/db');  // 从 config/db 导入
 const { authenticateToken } = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'physics-hub-pku-2024-secure-key';
@@ -147,7 +147,6 @@ router.put('/password', authenticateToken, async (req, res) => {
 
 // 用户注销
 router.post('/logout', authenticateToken, (req, res) => {
-    // JWT是无状态的，客户端只需删除token即可
     res.json({ 
         success: true,
         message: '注销成功'
