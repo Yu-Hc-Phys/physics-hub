@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "user001@hub.edu",
+      "displayName": "TA Coordinator",
+      "role": "ta",
+      "password": "111111"
+    },
+    {
+      "id": 2,
+      "email": "user002@hub.edu",
+      "displayName": "Student #002",
+      "role": "student",
+      "password": "111111"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "name": "PHYC 205: 经典力学",
+      "description": "测试课程",
+      "ta_id": 1
+    }
+  ],
+  "posts": [],
+  "comments": []
+}
