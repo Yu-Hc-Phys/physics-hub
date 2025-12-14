@@ -95,79 +95,44 @@ module.exports = function initDatabase(db) {
 };
 
 async function initDefaultData(db) {
+    const defaultPassword = await bcrypt.hash('111111', 12);
+    
     return new Promise((resolve, reject) => {
-        // 插入5000个用户
+        // 插入默认用户 (1-100)
         const users = [];
-        
-        for (let i = 1; i <= 5000; i++) {
-            const userId = i.toString().padStart(4, '0'); // 改为4位填充，因为5000是4位数
+        for (let i = 1; i <= 100; i++) {
+            const userId = i.toString().padStart(3, '0');
             const email = `user${userId}@hub.edu`;
+            const displayName = i === 1 ? 'TA Coordinator' : `Student #${userId}`;
+            const role = i === 1 ? 'ta' : 'student';
             
-            let displayName, role, password;
-            
-            // 4700-5000为TA，其余为学生
-            if (i >= 4700 && i <= 5000) {
-                displayName = `TA Coordinator ${userId}`;
-                role = 'ta';
-                password = 'asymptotic_freedom'; // TA特殊密码
-            } else {
-                displayName = `Student #${userId}`;
-                role = 'student';
-                password = '111111'; // 学生默认密码
-            }
-            
-            users.push([email, password, displayName, role]);
+            users.push([email, defaultPassword, displayName, role]);
         }
 
-        // 逐个插入用户并加密密码
-        let completed = 0;
-        const insertNextUser = () => {
-            if (completed >= users.length) {
-                console.log(`✅ 成功初始化 ${completed} 个用户`);
+        const placeholders = users.map(() => '(?, ?, ?, ?)').join(',');
+        const values = users.flat();
+        
+        db.run(`INSERT OR IGNORE INTO users (email, password, display_name, role) VALUES ${placeholders}`, values, function(err) {
+            if (err) {
+                console.error('初始化用户数据失败:', err);
+                reject(err);
+            } else {
+                console.log(`成功初始化 ${this.changes} 个用户`);
                 
                 // 插入示例课程
                 db.run(`INSERT OR IGNORE INTO courses (name, description, ta_id, ta_name) VALUES (?, ?, ?, ?)`, 
-                    ['PHYC 205: 经典力学', '经典力学课程讨论区', 4700, 'TA Coordinator 4700'], 
+                    ['PHYC 205: Classical Mechanics', '经典力学课程讨论区', 1, 'TA Coordinator'], 
                     function(err) {
                         if (err) {
                             console.error('初始化课程数据失败:', err);
                             reject(err);
                         } else {
-                            console.log('✅ 数据库初始化完成');
+                            console.log('数据库初始化完成');
                             resolve();
                         }
                     }
                 );
-                return;
             }
-
-            const [email, plainPassword, displayName, role] = users[completed];
-            
-            bcrypt.hash(plainPassword, 12, (err, hashedPassword) => {
-                if (err) {
-                    console.error(`加密密码失败 ${email}:`, err);
-                    reject(err);
-                    return;
-                }
-                
-                db.run(
-                    `INSERT OR IGNORE INTO users (email, password, display_name, role) VALUES (?, ?, ?, ?)`,
-                    [email, hashedPassword, displayName, role],
-                    function(err) {
-                        if (err) {
-                            console.error('插入用户失败:', err);
-                            reject(err);
-                            return;
-                        }
-                        
-                        completed++;
-                        insertNextUser();
-                    }
-                );
-            });
-        };
-
-        // 开始插入用户
-        insertNextUser();
+        });
     });
 }
